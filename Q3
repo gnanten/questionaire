@@ -1,0 +1,55 @@
+#!/bin/bash
+
+until [ $# -eq 0 ]
+do
+
+	case "$1" in
+        -s | --source_url)
+            source_url=$2
+             ;;
+        -u | --username)
+            username=$2
+            ;;
+        -p | --password )
+	    password=$2
+            ;;
+	-f | --fresh_clone)
+	    fresh_clone=$2	   
+            ;;
+	-a | --Application_name)
+	    Application_name=$2	   
+            ;;
+    	 *)
+   	    echo "Internal error!"
+     	    exit 1
+   	    ;;
+
+        esac
+	shift 2
+done
+if [[ $fresh_clone == 'y' ]]; then
+	git clone ${source_url} ||true
+	repo=$(echo ${source_url} | cut -d'/' -f5|cut -d'.' -f1)
+	cp Q3 $repo/
+	cd $repo
+	echo "Please disable fresh_clone and then change directory to newly cloned repo. else the script wont work. Here is the dir ${PWD}"
+
+fi
+current_version=1
+tags=$(git tag)
+index=0
+for version in $tags
+do
+	version_lst[$index]=${version:$(( ${#version}-1))}
+    	index=$((index+1))
+done
+IFS=$'\n'
+max_version=$(echo "${version_lst[*]}" | sort -nru | head -n1)
+current_version=$((max_version+1))
+d=$(date +%d-%m-%y-%T|cut -d':' -f1)
+
+if [[ current_version ]]; then
+	git tag "${d}-${Application_name}-v${current_version}"
+else
+	git tag "${d}-${Application_name}-v1"
+fi
